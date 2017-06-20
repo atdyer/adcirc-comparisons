@@ -1,14 +1,17 @@
 from Mesh import Mesh
+from Shape import *
 
 class Comparator:
 
-    def __init__( self, base_mesh: Mesh, comp_mesh: Mesh ):
+    def __init__( self, base_mesh: Mesh, comp_mesh: Mesh, bounding_shape: Shape = InfiniteShape() ):
 
         self.base = base_mesh
         self.comp = comp_mesh
+        self.bounds = bounding_shape
 
         self.common_nodes = dict()
-        self.uncommon_nodes = dict()
+        self.unique_nodes_base = dict()
+        self.unique_nodes_comp = dict()
 
     def compare_meshes( self ):
 
@@ -19,18 +22,43 @@ class Comparator:
         if not self.comp.f14read:
             self.comp.read_fort14()
 
-        print( '\tComparing nodal locations' )
+        if isinstance( self.bounds, InfiniteShape ):
+            print( '\tComparing nodal locations for entire domain' )
+        else:
+            print( '\tComparing nodal locations within shape:' )
+            print( '\t\t', self.bounds )
 
-        # Count node occurences to determine which are unique and which overlap
-        node_counts = dict()
+        # Build dictionary of base mesh nodes
+        base_nodes = dict()
 
-        for nodes in [ self.base.nodes, self.comp.nodes ]:
+        for node, ( x, y, d ) in self.base.nodes.items():
 
-            for node, ( x, y, d ) in nodes.items():
+            n = ( x, y )
+            if self.bounds.contains( n ):
+                base_nodes[ n ] = node
 
-                key = ( x, y )
-                if key not in node_counts:
-                    node_counts[ key ] = []
-                node_counts[ key ].append( node )
+        # Look for common nodes in the compare mesh
+        for node, ( x, y, d ) in self.comp.nodes.items():
 
-        print( len( node_counts ) )
+            key = ( x, y )
+            if key in base_nodes:
+
+                # The node is in both meshes, store the node numbers in the common nodes dictionary
+                base_node_number = base_nodes[ key ]
+                self.common_nodes[ key ] = [ base_node_number, node ]
+
+                # Remove the common node from the base mesh nodes
+                del base_nodes[ key ]
+
+            else:
+
+                if self.bounds.contains( key ):
+                    self.unique_nodes_comp[ key ] = node
+
+        self.unique_nodes_base = base_nodes
+
+        print( '\tCommon nodes:', len( self.common_nodes ) )
+        print( '\t', self.base.dir )
+        print( '\t\tUnique nodes:', len( self.unique_nodes_base ) )
+        print( '\t', self.comp.dir )
+        print( '\t\tUnique nodes:', len( self.unique_nodes_comp ) )

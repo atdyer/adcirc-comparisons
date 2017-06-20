@@ -3,7 +3,7 @@ from MeshExceptions import *
 
 class Mesh:
 
-    def __init__(self, domain_dir):
+    def __init__( self, domain_dir ):
 
         domain_dir = domain_dir.strip()
         if not domain_dir[-1] == '/':
@@ -52,6 +52,20 @@ class Mesh:
             print( 'Error: Cannot open', filename, 'at', self.dir )
             exit()
 
+
+    # Opens elevation timeseries file for reading
+    def read_fort63( self ):
+
+        if not os.path.exists( self.dir + 'fort.63' ):
+            print( '\tRun not completed, unable to read elevation timeseries.' )
+            return
+
+        print( '\tReading fort.63 at', self.dir )
+
+    # Opens velocity timeseries file for reading
+    def read_fort64( self ):
+
+        print( '\tReading fort.64 at', self.dir )
 
     # Reads the mesh
     def read_fort14( self ):
