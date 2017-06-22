@@ -4,21 +4,30 @@ from Comparator import Comparator
 
 import matplotlib.pyplot as plt
 
-base = Mesh( '/home/tristan/box/adcirc/runs/scaled20-refinement/original' )
-comp = Mesh( '/home/tristan/box/adcirc/runs/scaled20-refinement/10' )
+base = Mesh( '/home/tristan/box/adcirc/runs/scaled20-noutgs/200' )
+comp = Mesh( '/home/tristan/box/adcirc/runs/scaled20-noutgs/3200' )
 
-circle = Circle( -77.9199990000, 33.8721240000, 0.01 )
+# circle = Circle( -77.9199990000, 33.8721240000, 0.03 )
 
-comparator = Comparator( base, comp, circle )
+comparator = Comparator( base, comp )
 comparator.compare_meshes()
+rmse = comparator.compare_elevation_timeseries()
 
-common_nodes = comparator.common_nodes
-xvals = []
-yvals = []
-for ( x, y ), node_numbers in common_nodes.items():
+with open( '/home/tristan/box/adcirc/runs/scaled20-noutgs/rmse.txt', 'w' ) as f:
 
-    xvals.append( x )
-    yvals.append( y )
+    for ( x, y ), e in rmse.items():
 
-plt.scatter( xvals, yvals )
-plt.show()
+        f.write( str( x ) + '\t' + str( y ) + '\t' + str( e ) + '\n' )
+
+# xvals = []
+# yvals = []
+# evals = []
+# for ( x, y ), e in rmse.items():
+#
+#     xvals.append( x )
+#     yvals.append( y )
+#     evals.append( e )
+#     print( x, y, e )
+#
+# plt.scatter( xvals, yvals, c=evals )
+# plt.show()

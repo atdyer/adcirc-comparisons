@@ -1,5 +1,6 @@
 import os
 from MeshExceptions import *
+from Timestep import *
 
 class Mesh:
 
@@ -13,8 +14,8 @@ class Mesh:
 
         # File statuses
         self.f14read = False
-        self.f63read = False
-        self.f64read = False
+        self.f63open = False
+        self.f64open = False
 
         # Mesh properties
         self.f14header = None
@@ -24,6 +25,23 @@ class Mesh:
         self.elements = None
         self.x_bounds = None
         self.y_bounds = None
+
+        # Elevation timeseries
+        self.f63 = None
+        self.f63header = None
+        self.f63ts = None
+        self.f63nodes = None
+        self.f63dt = None
+        self.f63nspoolge = None
+        self.f63current = None
+
+        # Velocity timeseries
+        self.f64 = None
+        self.f64header = None
+        self.f64ts = None
+        self.f64nodes = None
+        self.f64dt = None
+        self.f64nspoolge = None
 
         # Mesh boundaries
         self.elev_boundary_segments = None
@@ -36,12 +54,6 @@ class Mesh:
         self.num_flow_boundary_nodes = None
 
 
-    # Returns True if the domain has been run
-    def is_completed_run( self ):
-
-        return os.path.exists( self.dir + 'fort.63' ) and os.path.exists( self.dir + 'fort.64' )
-
-
     # Opens and returns an input file with a given name at the domain's directory
     def open_input_file( self, filename ):
 
@@ -52,20 +64,87 @@ class Mesh:
             print( 'Error: Cannot open', filename, 'at', self.dir )
             exit()
 
+    def has_next_elevation_timestep( self ):
+
+        if self.f63ts is not None:
+            return self.f63current < self.f63ts
+
+        return False
+
+    def next_timestep( self, fields=None ):
+
+        if fields is None:
+
+            fields = []
+            if self.f63open: fields.append( 'elevation' )
+            if self.f64open: fields.append( 'velocity' )
+
+        ts = Timestep()
+
+        if 'elevation' in fields and self.f63open:
+
+            header = self.f63.readline().split()
+            time = float( header[0] )
+            timestep = float( header[1] )
+            field = Field( 'elevation', 1, time, timestep )
+
+            self.__read_timeseries( self.f63, field )
+            self.f63current += 1
+            ts.add_field( field )
+
+        return ts
+
 
     # Opens elevation timeseries file for reading
-    def read_fort63( self ):
+    def start_fort63(self):
 
-        if not os.path.exists( self.dir + 'fort.63' ):
-            print( '\tRun not completed, unable to read elevation timeseries.' )
-            return
+        if self.f63 is not None:
+            self.f63.close()
+            self.f63 = None
 
         print( '\tReading fort.63 at', self.dir )
+        f = self.open_input_file( 'fort.63' )
+
+        # Read the header
+        self.f63header = f.readline()
+
+        # Read the timeseries information
+        l = f.readline().split()
+        self.f63ts = int( l[0] )
+        self.f63nodes = int( l[1] )
+        self.f63nspoolge = int( l[3] )
+        self.f63dt = float( l[2] ) / self.f63nspoolge
+
+        # Set fort.63 status
+        self.f63 = f
+        self.f63open = True
+        self.f63current = 0
+
 
     # Opens velocity timeseries file for reading
-    def read_fort64( self ):
+    def start_fort64( self ):
+
+        if self.f64 is not None:
+            self.f64.close()
+            self.f64 = None
 
         print( '\tReading fort.64 at', self.dir )
+        f = self.open_input_file( 'fort.64' )
+
+        # Read the header
+        self.f64header = f.readline()
+
+        # Read the timeseries information
+        l = f.readline().split()
+        self.f64ts = int( l[0] )
+        self.f64nodes = int( l[1] )
+        self.f64nspoolge = int( l[3] )
+        self.f64dt = float( l[2] ) / self.f64nspoolge
+
+        # Set fort.64 status
+        self.f64 = f
+        self.f64open = True
+        self.current_timestep = 0
 
     # Reads the mesh
     def read_fort14( self ):
@@ -239,3 +318,16 @@ class Mesh:
         print( '\tElevation specified boundary segments:', self.num_elev_boundary_segments, '(', len( self.elev_boundary_segments ), ')' )
         print( '\tFlow specified boundary nodes:', self.num_flow_boundary_nodes, '(', len( self.flow_boundary_nodes ), ')' )
         print( '\tFlow specified boundary segments:', self.num_flow_boundary_segments, '(', len( self.flow_boundary_segments ), ')' )
+
+    def __read_timeseries( self, file, field ):
+
+        for i in range( self.num_nodes ):
+
+            dat = file.readline().split()
+            node = int( dat[0] )
+            values = []
+
+            for j in range( field.ndims ):
+                values.append( float(dat[1 + j]) )
+
+            field.value( node, values )
