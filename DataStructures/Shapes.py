@@ -1,53 +1,26 @@
 from abc import ABC, abstractmethod
-from .Items import *
 
 class Shape(ABC):
 
     @abstractmethod
-    def contains(self, item: Item):
-        """Returns true if this shape contains the item"""
+    def contains_point(self, x, y):
+        """Returns True if the point (x, y) falls inside of the shape, False otherwise"""
 
-    @abstractmethod
-    def intersects(self, x1, y1, x2, y2):
-        """Returns true if a line segment intersects with the shape's edge"""
+class Circle(Shape):
 
-    @abstractmethod
-    def edge_point(self):
-        """Returns a single point that falls on the edge of this shape"""
+    def __init__(self, x, y, r):
 
-class PointShape(Shape):
-
-    def __init__(self, x, y):
         self.x = x
         self.y = y
+        self.r = r
+        self.rsq = r*r
 
-    def contains(self, item: Item):
-        if type(item) is Point:
-            return item.x == self.x and item.y == self.y
-        if type(item) is Node:
-            return item.x == self.x and item.y == self.y
-        if type(item) is MeshElement:
-            nodes = item.mesh.elements[item.element_number]
-            p0 = item.mesh.nodes[nodes[0]]
-            p1 = item.mesh.nodes[nodes[1]]
-            p2 = item.mesh.nodes[nodes[2]]
+    def contains_point(self, x, y):
 
-            s = p0[1] * p2[0] - p0[0] * p2[1] + (p2[1] - p0[1]) * self.x + (p0[0] - p2[0]) * self.y
-            t = p0[0] * p1[1] - p0[1] * p1[0] + (p0[1] - p1[1]) * self.x + (p1[0] - p0[0]) * self.y
-            
-            if s < 0 != t < 0:
-                return False
+        return ((self.x - x)**2 + (self.y - y)**2) <= self.rsq
 
-            a = -p1[1] * p2[0] + p0[1] * (p2[0] - p1[0]) + p0[0] * (p1[1] - p2[1]) + p1[0] * p2[1]
-            if a < 0.0:
-                s = -s
-                t = -t
-                a = -a
+class Infinite(Shape):
 
-            return s > 0.0 and t > 0.0 and s + t <= a
+    def contains_point(self, x, y):
 
-    def intersects(self, x1, y1, x2, y2):
-        return False
-
-    def edge_point(self):
-        return self.x, self.y
+        return True

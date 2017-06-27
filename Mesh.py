@@ -42,6 +42,7 @@ class Mesh:
         self.f64nodes = None
         self.f64dt = None
         self.f64nspoolge = None
+        self.f64current = None
 
         # Mesh boundaries
         self.elev_boundary_segments = None
@@ -144,7 +145,7 @@ class Mesh:
         # Set fort.64 status
         self.f64 = f
         self.f64open = True
-        self.current_timestep = 0
+        self.f64current = 0
 
     # Reads the mesh
     def read_fort14( self ):
