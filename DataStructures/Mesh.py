@@ -58,6 +58,18 @@ class Mesh:
 
                 yield node, (x, y, z)
 
+    def num_elements(self, masked=True):
+
+        if not masked or type(self._mask) is Infinite:
+            return len(self._elements)
+        return sum(1 for _ in self.elements())
+
+    def num_nodes(self, masked=True):
+
+        if not masked or type(self._mask) is Infinite:
+            return len(self._nodes)
+        return sum(1 for _ in self.nodes())
+
     def element(self, element_number):
         """Returns the element, regardless of any masking that has been set"""
 
