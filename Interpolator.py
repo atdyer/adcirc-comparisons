@@ -7,37 +7,42 @@ class Interpolator:
     def __init__(self, mask=None):
 
         self._meshes = []
+        self._datasets = []
+        self._quadtrees = []
         self._mask = mask if mask is not None else Infinite()
 
         self._nodes = dict()
+        self._num_meshes = 0
 
-    def add_mesh(self, mesh):
+        self._current_model_time = 0
+
+    def add_mesh(self, mesh, datasets):
 
         # Apply the mask
         mesh.mask(self._mask)
 
-        print(mesh.num_elements())
+        print('Nodes:', mesh.num_nodes(), '\tElements:', mesh.num_elements())
 
         # Build the quadtree
         q = Quadtree(mesh, 5000)
 
         # Store the data
-        self._meshes.append((mesh, q))
+        self._meshes.append(mesh)
+        self._datasets.append(datasets)
+        self._quadtrees.append(q)
+        self._num_meshes += 1
 
     def flatten(self):
 
-        # Get the number of meshes and check for at least one
-        num_meshes = len(self._meshes)
-
-        if num_meshes < 1:
+        if self._num_meshes < 1:
 
             print('ERROR: No meshes in Interpolator')
             return
 
         # Build list of all nodes
-        for i in range(num_meshes):
+        for i in range(self._num_meshes):
 
-            mesh, quadtree = self._meshes[i]
+            mesh = self._meshes[i]
 
             # Every node in the dictionary will have a list with a value
             # for each mesh. The value will be a node number if that node
@@ -59,14 +64,18 @@ class Interpolator:
         # Find the element that non-existant nodes fall into
         for coordinates, nodes in self._nodes.items():
 
-            for i in range(num_meshes):
+            for i in range(self._num_meshes):
 
                 if nodes[i] is None:
 
-                    mesh, quadtree = self._meshes[i]
+                    quadtree = self._quadtrees[i]
                     element = quadtree.find_element(coordinates[0], coordinates[1])
 
                     nodes[i] = -element if element is not None else None
 
         # for coordinates, nodes in self._nodes.items():
         #     print(coordinates, nodes)
+
+    def next_timestep(self):
+
+        pass

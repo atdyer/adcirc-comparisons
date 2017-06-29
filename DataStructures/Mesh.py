@@ -34,7 +34,7 @@ class Mesh:
     def mask(self, shape: Shape):
         """Sets the mask used when generators are producing nodes or elements.
 
-        Nodes will be produced by the generator if the fall into the given shape.
+        Nodes will be produced by the generator if they fall into the given shape.
         Elements will be produced by the generator if all three of the nodes
         that comprise the element fall into the given shape.
         """
