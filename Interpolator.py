@@ -6,6 +6,8 @@ class Interpolator:
 
     def __init__(self, mask=None):
 
+        print('Creating interpolator')
+
         self._meshes = []
         self._datasets = []
         self._quadtrees = []
@@ -16,23 +18,36 @@ class Interpolator:
 
         self._current_model_time = 0
 
-    def add_mesh(self, mesh, datasets):
+    def add_mesh(self, mesh):
+
+        print('Adding mesh to interpolator')
+        print('\tNodes:', mesh.num_nodes(), '\tElements:', mesh.num_elements())
 
         # Apply the mask
         mesh.mask(self._mask)
-
-        print('Nodes:', mesh.num_nodes(), '\tElements:', mesh.num_elements())
 
         # Build the quadtree
         q = Quadtree(mesh, 5000)
 
         # Store the data
         self._meshes.append(mesh)
-        self._datasets.append(datasets)
         self._quadtrees.append(q)
         self._num_meshes += 1
 
+    def align(self):
+
+        print('Aligning timesteps')
+
+        if self._num_meshes < 1:
+
+            print('ERROR: No meshes in Interpolator')
+            return
+
+
+
     def flatten(self):
+
+        print('Creating node set for interpolator')
 
         if self._num_meshes < 1:
 
@@ -61,6 +76,8 @@ class Interpolator:
 
                 self._nodes[key].append(node_number)
 
+        print('\tNodes:', len(self._nodes))
+
         # Find the element that non-existant nodes fall into
         for coordinates, nodes in self._nodes.items():
 
@@ -72,9 +89,6 @@ class Interpolator:
                     element = quadtree.find_element(coordinates[0], coordinates[1])
 
                     nodes[i] = -element if element is not None else None
-
-        # for coordinates, nodes in self._nodes.items():
-        #     print(coordinates, nodes)
 
     def next_timestep(self):
 

@@ -1,3 +1,4 @@
+from DataStructures.Timestep import Timestep
 
 class File:
 
@@ -9,6 +10,73 @@ class File:
         except IOError:
             print('Error: Cannot open', file)
 
+class FortND(File):
+
+    def __init__(self, ndims, file):
+
+        super().__init__(file)
+        self.ndims = ndims
+
+        try:
+
+            self.header = self.f.readline()
+
+            dat = self.f.readline().split()
+
+            # The total number of available datasets
+            self.num_datasets = int(dat[0])
+
+            # The total number of nodes
+            self.num_nodes = int(dat[1])
+
+            # The number of timesteps at which data is written
+            self.timestep_interval = int(dat[3])
+
+            # The length of a timestep in seconds
+            self.dt = float(dat[2]) / self.timestep_interval
+
+        except IOError:
+
+            print('Error reading file', self.f)
+
+    def next_timestep(self):
+
+        dat = self.f.readline().split()
+        time = float(dat[0])
+        iteration = int(dat[1])
+
+        ts = Timestep(self.ndims, time, iteration)
+
+        for i in range(self.num_nodes):
+
+            dat = self.f.readline().split()
+            node = int(dat[0])
+            value = []
+
+            for j in range(self.ndims):
+                value.append(float(dat[1+j]))
+
+            ts.set(node, tuple(value))
+
+        return ts
+
+    def timesteps(self):
+
+        for i in range(self.num_datasets):
+
+            yield self.next_timestep()
+
+class Fort63(FortND):
+
+    def __init__(self, file):
+
+        super().__init__(1, file)
+
+class Fort64(FortND):
+
+    def __init__(self, file):
+
+        super().__init__(2, file)
 
 class MaxFile(File):
 

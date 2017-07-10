@@ -1,6 +1,6 @@
-import os
+from DataStructures.Timestep import *
 from MeshExceptions import *
-from Timestep import *
+
 
 class Mesh:
 
