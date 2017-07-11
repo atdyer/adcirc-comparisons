@@ -15,7 +15,8 @@ class FortND(File):
     def __init__(self, ndims, file):
 
         super().__init__(file)
-        self.ndims = ndims
+        self._ndims = ndims
+        self._masked_mesh = None
 
         try:
 
@@ -39,13 +40,18 @@ class FortND(File):
 
             print('Error reading file', self.f)
 
+    def apply_masked_mesh(self, mesh):
+
+        self._masked_mesh = mesh
+
     def next_timestep(self):
+        """Returns the next timestep in the file"""
 
         dat = self.f.readline().split()
         time = float(dat[0])
         iteration = int(dat[1])
 
-        ts = Timestep(self.ndims, time, iteration)
+        ts = Timestep(self._ndims, time, iteration)
 
         for i in range(self.num_nodes):
 
@@ -53,14 +59,17 @@ class FortND(File):
             node = int(dat[0])
             value = []
 
-            for j in range(self.ndims):
-                value.append(float(dat[1+j]))
+            if self._masked_mesh is None or self._masked_mesh.contains(node):
 
-            ts.set(node, tuple(value))
+                for j in range(self._ndims):
+                    value.append(float(dat[1+j]))
+
+                ts.set(node, tuple(value))
 
         return ts
 
     def timesteps(self):
+        """Iterator that yields all timesteps in the file"""
 
         for i in range(self.num_datasets):
 

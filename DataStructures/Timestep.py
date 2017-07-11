@@ -12,6 +12,7 @@ class Timestep:
         self._nan_val = nan_val
 
     def set(self, node, value):
+        """Set the value at a node for this timestep"""
 
         # Add the value to the dictionary
         self._nodes[node] = value
@@ -25,6 +26,7 @@ class Timestep:
                 if value[i] > self._max[i]: self._max[i] = value[i]
 
     def get(self, node):
+        """Get the value at a node for this timestep"""
 
         if node in self._nodes:
 
@@ -33,11 +35,13 @@ class Timestep:
         return None
 
     def nodes(self):
+        """Iterator that yields all nodes in the timestep as a tuple containing (node, value)"""
 
-        for node in self._nodes:
+        for node, value in self._nodes.items():
 
-            yield node
+            yield node, value
 
     def range(self):
+        """A tuple containing the min and max values of this timestep"""
 
         return tuple(self._min), tuple(self._max)

@@ -1,24 +1,19 @@
-from DataStructures.Mesh import Mesh
 from DataStructures.Shapes import *
 from Interpolator import Interpolator
+from Adcirc.Run import Run
 
-mesh1 = Mesh()
-mesh2 = Mesh()
-mesh3 = Mesh()
-mesh4 = Mesh()
+circle = Circle(-78.0094680, 33.8726840, 0.01)
+# circle = Infinite()
 
-mesh1.read('/home/tristan/box/adcirc/runs/scaled20-refinement/original/fort.14')
-mesh2.read('/home/tristan/box/adcirc/runs/scaled20-refinement/1/fort.14')
-mesh3.read('/home/tristan/box/adcirc/runs/scaled20-refinement/4/fort.14')
-mesh4.read('/home/tristan/box/adcirc/runs/scaled20-refinement/10/fort.14')
-
-# circle = Circle(-78.0094680, 33.8726840, 0.01)
+run1 = Run('/home/tristan/box/adcirc/runs/scaled20-noutgs/200/', circle)
+run2 = Run('/home/tristan/box/adcirc/runs/scaled20-noutgs/3200/', circle)
+run3 = Run('/home/tristan/box/adcirc/runs/scaled20-refinement/1/', circle)
 
 interp = Interpolator()
-interp.add_mesh(mesh1)
-interp.add_mesh(mesh2)
-interp.add_mesh(mesh3)
-interp.add_mesh(mesh4)
+interp.add_run(run1)
+interp.add_run(run2)
+interp.add_run(run3)
 
 interp.flatten()
-# interp.generate_node_sets()
+interp.align_elevation_timeseries()
+interp.calculate_maximum_elevation_differences()

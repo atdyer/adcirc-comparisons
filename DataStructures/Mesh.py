@@ -3,11 +3,11 @@ from .Exceptions import *
 
 class Mesh:
 
-    def __init__(self):
+    def __init__(self, mask=Infinite()):
 
         self._nodes = dict()
         self._elements = dict()
-        self._mask = Infinite()
+        self._mask = mask
         
         self._x_bounds = None
         self._x_bounds_masked = None
@@ -30,6 +30,10 @@ class Mesh:
         if n2 not in self._nodes: raise NodeDoesNotExistError(n2)
         if n3 not in self._nodes: raise NodeDoesNotExistError(n3)
         self._elements[element_number] = (n1, n2, n3)
+
+    def contains(self, node_number):
+
+        return node_number in self._nodes
 
     def mask(self, shape: Shape):
         """Sets the mask used when generators are producing nodes or elements.
