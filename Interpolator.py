@@ -8,105 +8,86 @@ class Interpolator:
 
         print('Creating interpolator')
 
-        self._runs = []
+        self._meshes = []
         self._nodes = dict()
+        self._timeseries = []
+
+        self._initialized = False
         self._current_model_time = 0
+        self._model_times = None
 
         self._ts1 = []
         self._ts2 = []
         self._elevation_indices = []
 
-    def add_run(self, run):
+    def add_timeseries(self, timeseries):
 
-        print('Adding ADCIRC run to interpolator')
+        print('Adding timeseries to interpolator')
 
-        # Store the run
-        self._runs.append(run)
+        self._timeseries.append(timeseries)
+        self._meshes.append(timeseries.mesh())
 
-    def _advance(self):
+    def advance(self):
 
-        return True
+        if not self._initialized:
 
-    @staticmethod
-    def _interpolate_value(start_ts, end_ts, node, time):
+            self._model_times = [timeseries.advance() for timeseries in self._timeseries]
 
-        if time == start_ts.model_time: return start_ts.get(node)
-        if time == end_ts.model_time: return end_ts.get(node)
-        if start_ts.model_time < time < end_ts.model_time:
-            percent = (time - start_ts.model_time) / (end_ts.model_time - start_ts.model_time)
-            start_vals = start_ts.get(node)
-            end_vals = end_ts.get(node)
-            # if node == 17132:
-                # print(percent, start_vals, end_vals)
-            return tuple( s + percent * (f-s) for s in start_vals for f in end_vals)
-        return None
+            if None in self._model_times:
+                return None
 
-    def _elevations(self, time):
+            # The first possible timestep will be the one that starts the latest
+            self._current_model_time = -float('inf')
+            for time_range in self._model_times:
+                if time_range[1] > self._current_model_time:
+                    self._current_model_time = time_range[1]
 
-        for coordinates, node_list in self._nodes.items():
+            # Now make sure that each timeseries is overlapping the latest time
+            for i in range(len(self._model_times)):
 
-            for i in self._elevation_indices:
+                # The the end time comes before the target time, we need to advance
+                if self._model_times[i][1] < self._current_model_time:
 
-                node_number = node_list[i]
-                start = self._ts1[i]
-                finish = self._ts2[i]
+                    self._model_times[i] = self._timeseries[i].advance()
 
-                if node_number > 0:
+                    # Make sure there is data
+                    if self._model_times[i] is None:
+                        return None
 
-                    yield i, node_number, self._interpolate_value(start, finish, node_number, time)
+            return self._current_model_time
 
+        else:
 
-    def align_elevation_timeseries(self):
-        """Determines the first timestep at which data will be generated"""
+            # Advance any timestep whose second ts falls on the current ts
+            for i in range(len(self._model_times)):
 
-        print('Aligning timesteps')
+                if self._current_model_time == self._model_times[i][1]:
 
-        num_runs = len(self._runs)
+                    self._model_times[i] = self._timeseries[i].advance()
 
-        # Empty out the first and second timesteps
-        self._ts1 = [None] * num_runs
-        self._ts2 = [None] * num_runs
+                    # Check that there's data
+                    if self._model_times[i] is None:
 
-        # Get indices of runs that have elevation timeseries
-        indices = []
-        for i in range(num_runs):
-            if self._runs[i].elevation_timeseries is not None:
-                indices.append(i)
+                        return None
 
-        # Load first and second timesteps
-        for i in indices:
+            next_model_time = float('inf')
 
-            self._ts1[i] = self._runs[i].next_elevation_timestep()
-            self._ts2[i] = self._runs[i].next_elevation_timestep()
+            # Determine the next model time to use
+            for i in range(len(self._model_times)):
 
-        # The first possible timestep will the the one that starts the latest
-        latest_ts = -float('inf')
-        for i in indices:
+                if self._current_model_time < self._model_times[i][1] < next_model_time:
 
-            if self._ts1[i].model_time > latest_ts:
+                    next_model_time = self._model_times[i][1]
 
-                latest_ts = self._ts1[i].model_time
+            self._current_model_time = next_model_time
 
-        # Now ensure that each run is at an overlapping point in time
-        for i in indices:
+            return self._current_model_time
 
-            while self._ts2[i].model_time < latest_ts:
+    def current_timestep(self):
 
-                self._ts1[i] = self._ts2[i]
-                self._ts2[i] = self._runs[i].next_elevation_timestep()
+        for coordinates, nodes in self._nodes.items():
 
-        self._elevation_indices = indices
-
-    def calculate_maximum_elevation_differences(self):
-
-        times = [1800, 2700, 3600]
-
-        for t in times:
-
-            for i, node, val in self._elevations(t):
-
-                if node == 17132 and i == 0:
-                    print(t, '% 4.10f' % val[0])
+            yield coordinates, tuple(self._value(node, ts, coordinates) for node in nodes for ts in self._timeseries)
 
 
     def flatten(self):
@@ -115,9 +96,9 @@ class Interpolator:
         print('Creating node set for interpolator')
 
         # Build list of all nodes
-        for i in range(len(self._runs)):
+        for i in range(len(self._meshes)):
 
-            mesh = self._runs[i].mesh
+            mesh = self._meshes[i]
 
             # Every node in the dictionary will have a list with a value
             # for each mesh. The value will be a node number if that node
@@ -139,7 +120,7 @@ class Interpolator:
         # Fill in the last slot(s)
         for key in self._nodes.keys():
 
-            while len(self._nodes[key]) < len(self._runs):
+            while len(self._nodes[key]) < len(self._meshes):
 
                 self._nodes[key].append(None)
 
@@ -148,11 +129,21 @@ class Interpolator:
         # Find the element that non-existant nodes fall into
         for coordinates, nodes in self._nodes.items():
 
-            for i in range(len(self._runs)):
+            for i in range(len(self._meshes)):
 
                 if nodes[i] is None:
 
-                    quadtree = self._runs[i].quadtree
+                    quadtree = self._meshes[i].quadtree
                     element = quadtree.find_element(coordinates[0], coordinates[1])
 
                     nodes[i] = -element if element is not None else None
+
+    def _value(self, node, timeseries, coordinates):
+
+        if node > 0:
+
+            return timeseries.nodal_value(node, self._current_model_time)
+
+        else:
+
+            return timeseries.elemental_value(abs(node), coordinates[0], coordinates[1], self._current_model_time)

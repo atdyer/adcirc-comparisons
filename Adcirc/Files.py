@@ -17,6 +17,7 @@ class FortND(File):
         super().__init__(file)
         self._ndims = ndims
         self._masked_mesh = None
+        self._current_dataset = 0
 
         try:
 
@@ -47,6 +48,10 @@ class FortND(File):
     def next_timestep(self):
         """Returns the next timestep in the file"""
 
+        if self._current_dataset == self.num_datasets:
+
+            return None
+
         dat = self.f.readline().split()
         time = float(dat[0])
         iteration = int(dat[1])
@@ -66,7 +71,13 @@ class FortND(File):
 
                 ts.set(node, tuple(value))
 
+        self._current_dataset += 1
+
         return ts
+
+    def num_dimensions(self):
+
+        return self._ndims
 
     def timesteps(self):
         """Iterator that yields all timesteps in the file"""
