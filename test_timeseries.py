@@ -1,9 +1,9 @@
 from Adcirc.Run import Run
 from DataStructures.Timeseries import Timeseries
 
-run = Run('./Data/single')
+run = Run('./Data/single-1')
 
-timeseries = Timeseries(1, './Data/single/fort.63', run.mesh)
+timeseries = Timeseries(1, './Data/single-1/fort.63', run.mesh)
 timeseries.advance()
 # print(timeseries.nodal_value(1, 1))
 # print(timeseries.nodal_value(2, 1))

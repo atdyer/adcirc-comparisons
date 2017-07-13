@@ -49,7 +49,7 @@ class Quadtree:
 
 
     def add_element(self, element_number):
-        """Adds a single element to the quadtree"""
+        """Adds a single-1 element to the quadtree"""
 
         # Is this a branch?
         if self._children is not None:

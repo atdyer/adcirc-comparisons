@@ -87,7 +87,7 @@ class Interpolator:
 
         for coordinates, nodes in self._nodes.items():
 
-            yield coordinates, tuple(self._value(node, ts, coordinates) for node in nodes for ts in self._timeseries)
+            yield coordinates, tuple(self._value(node, ts, coordinates) for node, ts in zip(nodes, self._timeseries))
 
 
     def flatten(self):
@@ -133,7 +133,7 @@ class Interpolator:
 
                 if nodes[i] is None:
 
-                    quadtree = self._meshes[i].quadtree
+                    quadtree = self._meshes[i].quadtree()
                     element = quadtree.find_element(coordinates[0], coordinates[1])
 
                     nodes[i] = -element if element is not None else None
