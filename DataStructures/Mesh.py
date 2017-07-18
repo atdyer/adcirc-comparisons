@@ -1,5 +1,6 @@
 from .Shapes import Shape, Infinite
 from .Exceptions import *
+from .Quadtree import Quadtree
 
 class Mesh:
 
@@ -8,6 +9,7 @@ class Mesh:
         self._nodes = dict()
         self._elements = dict()
         self._mask = mask
+        self._quadtree = None
         
         self._x_bounds = None
         self._x_bounds_masked = None
@@ -133,6 +135,14 @@ class Mesh:
                 n3 = int(dat[4])
 
                 self.add_element(en, n1, n2, n3)
+
+    def quadtree(self):
+
+        if self._quadtree is None:
+
+            self._quadtree = Quadtree(self, 5000)
+
+        return self._quadtree
 
     def x_bounds(self, masked=True):
 
