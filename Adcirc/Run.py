@@ -1,5 +1,4 @@
 from DataStructures.Mesh import Mesh
-from DataStructures.Quadtree import Quadtree
 from DataStructures.Shapes import Infinite
 from DataStructures.Timeseries import Timeseries
 import os.path
@@ -16,7 +15,6 @@ class Run:
         self._mask = mask
 
         self.mesh = None
-        self.quadtree = None
         self.elevation_timeseries = None
         self.velocity_timeseries = None
 
@@ -27,8 +25,7 @@ class Run:
             print('\t\N{WHITE BULLET} Loading mesh (fort.14)...')
             self.mesh = Mesh(self._mask)
             self.mesh.read(self._dir + 'fort.14')
-            print('\t\N{WHITE BULLET} Building quadtree...')
-            self.quadtree = Quadtree(self.mesh, 5000)
+            self.mesh.quadtree()
 
         if os.path.isfile(self._dir + 'fort.63'):
 

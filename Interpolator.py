@@ -124,9 +124,10 @@ class Interpolator:
 
                 self._nodes[key].append(None)
 
-        print('\t\N{WHITE BULLET} Nodes:', len(self._nodes))
-
-        # Find the element that non-existant nodes fall into
+        # Find the element that non-existant nodes fall into. If the node doesn't
+        # fall into any element, it does not fall into the overlapping portion and
+        # should be marked for removal.
+        removal = set()
         for coordinates, nodes in self._nodes.items():
 
             for i in range(len(self._meshes)):
@@ -136,7 +137,22 @@ class Interpolator:
                     quadtree = self._meshes[i].quadtree()
                     element = quadtree.find_element(coordinates[0], coordinates[1])
 
-                    nodes[i] = -element if element is not None else None
+                    if element is None:
+                        removal.add(coordinates)
+                    else:
+                        nodes[i] = -element
+
+        # Now remove all nodes that do not fall into the overlapping portion of
+        # all meshes in the interpolator
+        for coordinates in removal:
+
+            del self._nodes[coordinates]
+
+        print('\t\N{WHITE BULLET} Nodes:', len(self._nodes))
+
+    def nodes(self):
+
+        return self._nodes.keys()
 
     def _value(self, node, timeseries, coordinates):
 

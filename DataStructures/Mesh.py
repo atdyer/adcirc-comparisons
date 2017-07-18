@@ -140,6 +140,7 @@ class Mesh:
 
         if self._quadtree is None:
 
+            print('\t\N{WHITE BULLET} Building quadtree...')
             self._quadtree = Quadtree(self, 5000)
 
         return self._quadtree
