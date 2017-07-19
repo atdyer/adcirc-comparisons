@@ -16,16 +16,14 @@ class Interpolator:
         self._current_model_time = 0
         self._model_times = None
 
-        self._ts1 = []
-        self._ts2 = []
-        self._elevation_indices = []
-
     def add_timeseries(self, timeseries):
 
         print('Adding timeseries to interpolator')
 
         self._timeseries.append(timeseries)
         self._meshes.append(timeseries.mesh())
+
+        return len(self._timeseries) - 1
 
     def advance(self):
 
@@ -53,6 +51,8 @@ class Interpolator:
                     # Make sure there is data
                     if self._model_times[i] is None:
                         return None
+
+            self._initialized = True
 
             return self._current_model_time
 
