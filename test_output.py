@@ -6,6 +6,9 @@ run1 = Run('./Data/black')
 run2 = Run('./Data/blue')
 run3 = Run('./Data/red')
 
+# run1 = Run('/home/tristan/box/adcirc/runs/refinement/4/')
+# run2 = Run('/home/tristan/box/adcirc/runs/subdomain-runs/circle-1/')
+
 ele_comparator = Comparator()
 ele_comparator.add_timeseries(run1.elevation_timeseries, True)
 ele_comparator.add_timeseries(run2.elevation_timeseries)
@@ -18,6 +21,7 @@ ele_comparator.work()
 
 for coordinates, avgs in ele_avg_max.nodes():
     print(coordinates, avgs)
+# exit()
 
 vel_comparator = Comparator()
 vel_comparator.add_timeseries(run1.velocity_timeseries, True)

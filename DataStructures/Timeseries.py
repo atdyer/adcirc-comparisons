@@ -42,12 +42,10 @@ class Timeseries:
 
         if model_time == self._ts1.model_time:
 
-            # print('No time interpolation:', self._ts1.get(node))
             return self._ts1.get(node)
 
         if model_time == self._ts2.model_time:
 
-            # print('No time interpolation:', self._ts2.get(node))
             return self._ts2.get(node)
 
         if self._ts1.model_time < model_time < self._ts2.model_time:
@@ -58,7 +56,6 @@ class Timeseries:
             v2 = self._ts2.get(node)
 
             dat = tuple(self._linear_interpolate(t1, t2, a, b, model_time) for a in v1 for b in v2)
-            # print('Time interpolate:', dat)
 
             return dat
 
@@ -82,6 +79,9 @@ class Timeseries:
         v1 = self.nodal_value(nodes[0], model_time)
         v2 = self.nodal_value(nodes[1], model_time)
         v3 = self.nodal_value(nodes[2], model_time)
+
+        if -99999.0 in v1 or -99999.0 in v2 or -99999.0 in v3:
+            return tuple(-99999.0 for _ in v1)
 
         return tuple(a1*_v1 + a2*_v2 + a3*_v3 for _v1, _v2, _v3 in zip(v1, v2, v3))
 

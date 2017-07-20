@@ -32,6 +32,8 @@ class Comparator:
         # Initialize the interpolator
         self._interpolator.flatten()
 
+        print('Starting timestepping')
+
         # Start timestepping
         while self._interpolator.advance():
 
@@ -44,6 +46,8 @@ class Comparator:
                 for comparison in self._comparisons:
 
                     comparison.nodal_values(coordinates, values)
+
+        print('Finished timestepping')
 
         for comparison in self._comparisons:
 
@@ -78,32 +82,65 @@ class AverageMaximumDifference(Comparison):
         self._accumulator = dict()
 
     def advance(self):
-        self._count += 1
+        pass
 
     def nodal_values(self, coordinates, values):
 
-        min_val = min(values)
-        max_val = max(values)
-        diffs = tuple(map(lambda high, low: high - low, max_val, min_val))
+        if coordinates not in self._accumulator:
+
+            self._accumulator[coordinates] = [0, values]
+
+        # if not any(-99999.0 in tup for tup in values):
+
+        rotated = tuple(zip(*values))
+        min_vals = tuple(min(t) for t in rotated)
+        max_vals = tuple(max(t) for t in rotated)
+        diffs = tuple(high-low for high, low in zip(max_vals, min_vals))
+
+        print(rotated)
+        print(min_vals)
+        print(max_vals)
+        print(diffs)
 
         if coordinates not in self._accumulator:
 
-            self._accumulator[coordinates] = diffs
+            if -99999.0 in min_vals:
+
+                self._accumulator[coordinates] = [0, diffs]
+
+            else:
+
+                self._accumulator[coordinates] = [1, diffs]
 
         else:
 
-            accum = self._accumulator[coordinates]
-            self._accumulator[coordinates] = tuple(map(lambda a, b: a + b, accum, diffs))
+            if not -99999.0 in min_vals:
+
+                accum = self._accumulator[coordinates][1]
+                self._accumulator[coordinates][0] += 1
+                self._accumulator[coordinates][1] = tuple(map(lambda a, b: a + b, accum, diffs))
 
     def nodes(self):
 
-        for coordinates, values in self._accumulator.items():
+        for coordinates, (count, values) in self._accumulator.items():
 
-            yield coordinates, tuple(map(lambda x: x/self._count, values))
+            if count == 0:
+
+                yield coordinates, tuple(map(lambda x: -99999.0, values))
+
+            else:
+
+                yield coordinates, tuple(map(lambda x: x/count, values))
 
     def done(self):
 
-        pass
+        for coordinates, (count, values) in self._accumulator.items():
+
+            print(coordinates, count)
+
+            if count == 0:
+
+                print('\t\N{WHITE BULLET} No average maximum difference available for', coordinates, ' because all values were -99999')
 
 
 

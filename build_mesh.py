@@ -79,6 +79,7 @@ def write_fort63(f63, nodes, dt, num_ts, name='ADCIRC Elevation Timeseries'):
 
                 node_number = n+1
                 elevation = timestep[node_number]
+                if node_number == 1: elevation = -99999
 
                 f.write('{}\t{}\n'.format(node_number, elevation))
 

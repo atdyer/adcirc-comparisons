@@ -25,6 +25,10 @@ class Interpolator:
 
         return len(self._timeseries) - 1
 
+    def current_model_time(self):
+
+        return self._current_model_time
+
     def advance(self):
 
         if not self._initialized:
@@ -44,12 +48,13 @@ class Interpolator:
             for i in range(len(self._model_times)):
 
                 # The the end time comes before the target time, we need to advance
-                if self._model_times[i][1] < self._current_model_time:
+                while self._model_times[i][1] < self._current_model_time:
 
                     self._model_times[i] = self._timeseries[i].advance()
 
                     # Make sure there is data
                     if self._model_times[i] is None:
+                        print('WARNING: The time ranges do not overlap for specified runs')
                         return None
 
             self._initialized = True
@@ -91,50 +96,61 @@ class Interpolator:
 
 
     def flatten(self):
-        """Determines all nodes that will be used to provide data"""
 
-        print('Creating node set for interpolator')
+        print('Creating node set for interpolation')
+        print('\t\N{WHITE BULLET} Determining minimum bounding box')
+        
+        x_bounds = [-float('inf'), float('inf')]
+        y_bounds = [-float('inf'), float('inf')]
+        
+        for timeseries in self._timeseries:
 
-        # Build list of all nodes
-        for i in range(len(self._meshes)):
+            xb = timeseries.mesh().x_bounds()
+            yb = timeseries.mesh().y_bounds()
+            
+            if xb[0] > x_bounds[0]: x_bounds[0] = xb[0]
+            if xb[1] < x_bounds[1]: x_bounds[1] = xb[1]
+            if yb[0] > y_bounds[0]: y_bounds[0] = yb[0]
+            if yb[1] < y_bounds[1]: y_bounds[1] = yb[1]
+            
+        print('\t\N{WHITE BULLET} Building list of all nodes')
 
-            mesh = self._meshes[i]
+        for timeseries in self._timeseries:
 
-            # Every node in the dictionary will have a list with a value
-            # for each mesh. The value will be a node number if that node
-            # exists in the mesh, and will be None if it does not
+            mesh = timeseries.mesh()
+
+            for node_number, (x, y, z) in mesh.nodes():
+
+                if self._is_inside(x, y, x_bounds, y_bounds):
+
+                    key = (x, y)
+
+                    if key not in self._nodes:
+
+                        self._nodes[key] = [None]*len(self._timeseries)
+
+        for i in range(len(self._timeseries)):
+
+            mesh = self._timeseries[i].mesh()
+
             for node_number, (x, y, z) in mesh.nodes():
 
                 key = (x, y)
 
-                if key not in self._nodes:
+                if key in self._nodes:
 
-                    self._nodes[key] = [None]*(i-1)
+                    self._nodes[key][i] = node_number
 
-                while len(self._nodes[key]) < i:
+        print('\t\N{WHITE BULLET} Finding elements for non-duplicate nodes')
 
-                    self._nodes[key].append(None)
-
-                self._nodes[key].append(node_number)
-
-        # Fill in the last slot(s)
-        for key in self._nodes.keys():
-
-            while len(self._nodes[key]) < len(self._meshes):
-
-                self._nodes[key].append(None)
-
-        # Find the element that non-existant nodes fall into. If the node doesn't
-        # fall into any element, it does not fall into the overlapping portion and
-        # should be marked for removal.
         removal = set()
         for coordinates, nodes in self._nodes.items():
 
-            for i in range(len(self._meshes)):
+            for i in range(len(self._timeseries)):
 
                 if nodes[i] is None:
 
-                    quadtree = self._meshes[i].quadtree()
+                    quadtree = self._timeseries[i].mesh().quadtree()
                     element = quadtree.find_element(coordinates[0], coordinates[1])
 
                     if element is None:
@@ -142,8 +158,7 @@ class Interpolator:
                     else:
                         nodes[i] = -element
 
-        # Now remove all nodes that do not fall into the overlapping portion of
-        # all meshes in the interpolator
+        print('\t\N{WHITE BULLET} Removing nodes that do not overlap')
         for coordinates in removal:
 
             del self._nodes[coordinates]
@@ -163,3 +178,8 @@ class Interpolator:
         else:
 
             return timeseries.elemental_value(abs(node), coordinates[0], coordinates[1], self._current_model_time)
+
+    @staticmethod
+    def _is_inside(x, y, x_bounds, y_bounds):
+
+        return x_bounds[0] <= x <= x_bounds[1] and y_bounds[0] <= y <= y_bounds[1]
