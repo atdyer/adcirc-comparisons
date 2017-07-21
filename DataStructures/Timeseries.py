@@ -29,6 +29,10 @@ class Timeseries:
 
         return self._ts1.model_time, self._ts2.model_time
 
+    def dataset_index(self):
+
+        return self._fortnd.dataset_index()
+
     def dimensions(self):
 
         return self._fortnd.num_dimensions()

@@ -98,6 +98,8 @@ def write_fort64(f64, nodes, dt, num_ts, name='ADCIRC Velocity Timeseries'):
 
                 node_number = n+1
                 xvel, yvel = timestep[node_number]
+                if node_number == 1:
+                    xvel, yvel = -99999, -99999
                 f.write('{}\t{}\t{}\n'.format(node_number, xvel, yvel))
 
 

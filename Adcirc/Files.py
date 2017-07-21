@@ -45,6 +45,10 @@ class FortND(File):
 
         self._masked_mesh = mesh
 
+    def dataset_index(self):
+
+        return self._current_dataset, self.num_datasets
+
     def next_timestep(self):
         """Returns the next timestep in the file"""
 

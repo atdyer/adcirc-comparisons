@@ -1,6 +1,4 @@
-from DataStructures.Mesh import Mesh
-from DataStructures.Quadtree import Quadtree
-from DataStructures.Shapes import *
+import sys
 
 class Interpolator:
 
@@ -29,9 +27,15 @@ class Interpolator:
 
         return self._current_model_time
 
+    def timeseries_indices(self):
+
+        return tuple(ts.dataset_index() for ts in self._timeseries)
+
     def advance(self):
 
         if not self._initialized:
+
+            print('\t\N{WHITE BULLET} Advancing to first overlapping timestep...')
 
             self._model_times = [timeseries.advance() for timeseries in self._timeseries]
 
@@ -49,6 +53,8 @@ class Interpolator:
 
                 # The the end time comes before the target time, we need to advance
                 while self._model_times[i][1] < self._current_model_time:
+
+                    self._print_progress(self.timeseries_indices())
 
                     self._model_times[i] = self._timeseries[i].advance()
 
@@ -183,3 +189,14 @@ class Interpolator:
     def _is_inside(x, y, x_bounds, y_bounds):
 
         return x_bounds[0] <= x <= x_bounds[1] and y_bounds[0] <= y <= y_bounds[1]
+
+    @staticmethod
+    def _print_progress(indices):
+
+        string = ''
+
+        for ts in indices:
+            string += str(ts[0]) + '/' + str(ts[1]) + ', '
+
+        sys.stdout.write('\t\N{WHITE BULLET} ' + string[:-2] + '\r')
+        sys.stdout.flush()

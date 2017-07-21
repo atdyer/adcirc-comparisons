@@ -1,7 +1,7 @@
 from Adcirc.Run import Run
 from Interpolator import Interpolator
 from abc import ABCMeta, abstractmethod
-import itertools
+import itertools, sys
 
 class Comparator:
 
@@ -53,6 +53,7 @@ class Comparator:
 
             comparison.done()
 
+
 class Comparison(metaclass=ABCMeta):
 
     @abstractmethod
@@ -86,27 +87,16 @@ class AverageMaximumDifference(Comparison):
 
     def nodal_values(self, coordinates, values):
 
-        if coordinates not in self._accumulator:
-
-            self._accumulator[coordinates] = [0, values]
-
-        # if not any(-99999.0 in tup for tup in values):
-
         rotated = tuple(zip(*values))
         min_vals = tuple(min(t) for t in rotated)
         max_vals = tuple(max(t) for t in rotated)
         diffs = tuple(high-low for high, low in zip(max_vals, min_vals))
 
-        print(rotated)
-        print(min_vals)
-        print(max_vals)
-        print(diffs)
-
         if coordinates not in self._accumulator:
 
             if -99999.0 in min_vals:
 
-                self._accumulator[coordinates] = [0, diffs]
+                self._accumulator[coordinates] = [0, tuple(-99999.0 for _ in diffs)]
 
             else:
 
@@ -116,9 +106,15 @@ class AverageMaximumDifference(Comparison):
 
             if not -99999.0 in min_vals:
 
-                accum = self._accumulator[coordinates][1]
-                self._accumulator[coordinates][0] += 1
-                self._accumulator[coordinates][1] = tuple(map(lambda a, b: a + b, accum, diffs))
+                if self._accumulator[coordinates][0] == 0:
+
+                    self._accumulator[coordinates] = [1, diffs]
+
+                else:
+
+                    accum = self._accumulator[coordinates][1]
+                    self._accumulator[coordinates][0] += 1
+                    self._accumulator[coordinates][1] = tuple(map(lambda a, b: a + b, accum, diffs))
 
     def nodes(self):
 
@@ -126,7 +122,7 @@ class AverageMaximumDifference(Comparison):
 
             if count == 0:
 
-                yield coordinates, tuple(map(lambda x: -99999.0, values))
+                yield coordinates, values
 
             else:
 
@@ -135,8 +131,6 @@ class AverageMaximumDifference(Comparison):
     def done(self):
 
         for coordinates, (count, values) in self._accumulator.items():
-
-            print(coordinates, count)
 
             if count == 0:
 
