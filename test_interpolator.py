@@ -6,9 +6,9 @@ circle = Circle(-78.0094680, 33.8726840, 0.0035)
 # circle = Infinite()
 
 # All
-run1 = Run('./Data/single-1')
-run2 = Run('./Data/single-1-offset')
-run3 = Run('./Data/single-2')
+# run1 = Run('./Data/single-1')
+# run2 = Run('./Data/single-1-offset')
+# run3 = Run('./Data/single-2')
 
 # Desktop
 # run1 = Run('/home/tristan/box/adcirc/runs/scaled20-noutgs/200/', circle)
