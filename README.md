@@ -54,7 +54,7 @@ from Adcirc.Run import Run
 
 # A Circle takes a center point and a radius
 circle = Circle(-78.0094680, 33.8726840, 0.0035)
-run1 = Run('/home/tristan/adcirc/runs/run1', circle)
+run1 = Run('/home/tristan/adcirc/runs/run1/', circle)
 run2 = Run('/home/tristan/adcirc/runs/run2/', circle)
 ```
 
@@ -73,7 +73,7 @@ from Adcirc.Comparisons import Comparator
 
 # A Circle takes a center point and a radius
 circle = Circle(-78.0094680, 33.8726840, 0.0035)
-run1 = Run('/home/tristan/adcirc/runs/run1', circle)
+run1 = Run('/home/tristan/adcirc/runs/run1/', circle)
 run2 = Run('/home/tristan/adcirc/runs/run2/', circle)
 
 # Create a comparator to compare elevation timeseries data
@@ -103,7 +103,7 @@ from Adcirc.Comparisons import Comparator, AverageMaximumDifference
 
 # A Circle takes a center point and a radius
 circle = Circle(-78.0094680, 33.8726840, 0.0035)
-run1 = Run('/home/tristan/adcirc/runs/run1', circle)
+run1 = Run('/home/tristan/adcirc/runs/run1/', circle)
 run2 = Run('/home/tristan/adcirc/runs/run2/', circle)
 
 # Create a comparator to compare elevation timeseries data
@@ -127,7 +127,7 @@ from Adcirc.Comparisons import Comparator, AverageMaximumDifference
 
 # A Circle takes a center point and a radius
 circle = Circle(-78.0094680, 33.8726840, 0.0035)
-run1 = Run('/home/tristan/adcirc/runs/run1', circle)
+run1 = Run('/home/tristan/adcirc/runs/run1/', circle)
 run2 = Run('/home/tristan/adcirc/runs/run2/', circle)
 
 # Create a comparator to compare elevation timeseries data
@@ -145,8 +145,8 @@ elevation_comparator.work()
 
 ### Output results
 
-More coming soon, as there are multiple ways to do this. To loop through the values
-in the comparison, do the following:
+More coming soon, as there are multiple ways to do this. To write out the values for the average maximum difference
+comparison, just use the ```Comparison.save()``` method.
 
 ```python
 from DataStructures.Shapes import Circle
@@ -155,7 +155,7 @@ from Adcirc.Comparisons import Comparator, AverageMaximumDifference
 
 # A Circle takes a center point and a radius
 circle = Circle(-78.0094680, 33.8726840, 0.0035)
-run1 = Run('/home/tristan/adcirc/runs/run1', circle)
+run1 = Run('/home/tristan/adcirc/runs/run1/', circle)
 run2 = Run('/home/tristan/adcirc/runs/run2/', circle)
 
 # Create a comparator to compare elevation timeseries data
@@ -170,9 +170,8 @@ elevation_comparator.add_comparison(average_max_diff)
 # Process the data and perform comparisons
 elevation_comparator.work()
 
-# Loop through all common nodes and print results
-for coordinates, averages in average_max_diff.nodes():
-   print(coordinates, averages)
+# Save the data to file
+average_max_diff.save('/home/tristan/adcirc/runs/avg_max_diff.txt')
 ```
 
 ### Visualize results

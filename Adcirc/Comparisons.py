@@ -1,7 +1,7 @@
 from Adcirc.Run import Run
 from Interpolator import Interpolator
 from abc import ABCMeta, abstractmethod
-import itertools, sys
+import itertools
 
 class Comparator:
 
@@ -67,6 +67,10 @@ class Comparison(metaclass=ABCMeta):
     @abstractmethod
     def done(self):
         """Called when finished timestepping"""
+
+    @abstractmethod
+    def save(self, file):
+        """This method must provide a way to write the data to file"""
 
 class BaselineComparison(Comparison):
 
@@ -135,6 +139,16 @@ class AverageMaximumDifference(Comparison):
             if count == 0:
 
                 print('\t\N{WHITE BULLET} No average maximum difference available for', coordinates, ' because all values were -99999')
+
+    def save(self, file):
+
+        with open(file, 'w') as f:
+
+                f.write('x\ty\taverage maximum difference\n')
+
+                for coordinates, values in self.nodes():
+
+                    f.write('\t'.join(str(coord) for coord in coordinates) + '\t' + '\t'.join(str(val) for val in values) + '\n')
 
 
 
